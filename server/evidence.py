@@ -95,18 +95,18 @@ class EvidenceList:
         :param client: the client
 
         """
-        elevated_perms = client.is_cm or client.is_gm or client.is_mod
-        if not elevated_perms:
-            if client.is_blind:
-                return False
-            # TODO: check if this piece of evidence is 'translucent' (bypasses darkness)
-            if not client.area.lights:
-                return False
-            pos = pos.strip(" ")
-            for p in evi.pos.strip(" ").split(","):
-                if p == "all" or (pos != "" and pos == p):
-                    return True
-        return True
+        if client.is_cm or client.is_gm or client.is_mod:
+            return True
+        if client.is_blind:
+            return False
+        # TODO: check if this piece of evidence is 'translucent' (bypasses darkness)
+        if not client.area.lights:
+            return False
+        pos = client.pos.strip(" ")
+        for p in evi.pos.strip(" ").split(","):
+            if p == "all" or (pos != "" and pos == p):
+                return True
+        return False
 
     def correct_format(self, client, desc):
         """
