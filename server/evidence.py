@@ -49,8 +49,6 @@ class EvidenceList:
 
     def __init__(self):
         self.evidences = []
-        # putting in "defense" or "prosecution" will show it for those benches
-        self.poses = {'defense': ['def', 'hld'], 'prosecution': ['pro', 'hlp']}
 
     def import_evidence(self, data):
         for evi in data:
@@ -104,10 +102,10 @@ class EvidenceList:
             # TODO: check if this piece of evidence is 'translucent' (bypasses darkness)
             if not client.area.lights:
                 return False
-            if evi.pos == "all" or \
-              client.pos == evi.pos or \
-              (evi.pos in self.poses and client.pos in self.poses[evi.pos]):
-                return True
+            pos = pos.strip(" ")
+            for p in evi.pos.strip(" ").split(","):
+                if p == "all" or (pos != "" and pos == p):
+                    return True
         return True
 
     def correct_format(self, client, desc):
