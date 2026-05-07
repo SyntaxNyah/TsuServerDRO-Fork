@@ -867,8 +867,9 @@ class ClientManager:
             self.send_investigation()
 
         def send_evidence_list(self):
+            evidence_list = self.area.get_evidence_list(self)
             self.send_command_dict('LE', {
-                'evidence_ao2_list': self.area.get_evidence_list(self)
+                'evidence_ao2_list': evidence_list
             })
 
         def send_health(self, side=None, health=None):

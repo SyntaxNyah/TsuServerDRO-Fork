@@ -35,14 +35,39 @@ class EvidenceList:
         def set_image(self, image):
             self.image = image
 
-        def to_string(self):
+        def to_tuple(self):
             sequence = (self.name, self.desc, self.image)
-            return '&'.join(sequence)
+            return sequence
+
+        def to_dict(self):
+            return {
+                "name": self.name,
+                "desc": self.desc,
+                "image": self.image,
+                "pos": self.pos,
+            }
 
     def __init__(self):
         self.evidences = []
         # putting in "defense" or "prosecution" will show it for those benches
         self.poses = {'defense': ['def', 'hld'], 'prosecution': ['pro', 'hlp']}
+
+    def import_evidence(self, data):
+        for evi in data:
+            name, desc, image, pos = "<name>", "<desc>", "", "all"
+            if "name" in evi:
+                name = evi["name"]
+            if "desc" in evi:
+                desc = evi["desc"]
+            if "image" in evi:
+                image = evi["image"]
+            if "pos" in evi:
+                pos = evi["pos"]
+            self.evidences.append(self.Evidence(
+                name, desc, image, pos))
+
+    def export_evidence(self):
+        return [e.to_dict() for e in self.evidences]
 
     def login(self, client):
         """
@@ -81,7 +106,7 @@ class EvidenceList:
                 return False
             if evi.pos == "all" or \
               client.pos == evi.pos or \
-              client.pos in self.poses[evi.pos]:
+              (evi.pos in self.poses and client.pos in self.poses[evi.pos]):
                 return True
         return True
 
@@ -102,6 +127,48 @@ class EvidenceList:
             return True
         return False
 
+    def parse_desc(self, desc):
+        # Remember to adjust this any time you add a new property
+        num_properties = 5
+        
+        lines = desc.split("\n", num_properties)
+        poses = "hidden"
+        can_hide_in = 0
+        show_in_dark = 0
+        can_take = 0
+        editable = 0
+        matches = 0
+        for line in lines:
+            cmd = line.strip(" ") # remove all whitespace
+            if cmd.startswith("<") and cmd.endswith(">"):
+                args = cmd.strip("<>").split("=")
+                if len(args) < 2:
+                    break
+                key, value = args
+                if key == "owner":
+                    if value == "":
+                        value = "hidden"
+                    poses = value
+                    matches += 1
+                if key == "can_hide_in":
+                    can_hide_in = value == "1"
+                    matches += 1
+                if key == "show_in_dark":
+                    show_in_dark = int(value)
+                    matches += 1
+                if key == "can_take":
+                    can_take = value == "1"
+                    matches += 1
+                if key == "editable":
+                    editable = value == "1"
+                    matches += 1
+        # Remvoes N lines, where N is how many <> we matched. Can't be more than 3.
+        while matches > 0:
+            # Truncates from the start of newline
+            desc = desc[desc.find("\n")+1:]
+            matches -= 1
+        return desc, poses, can_hide_in, show_in_dark, can_take, editable
+
     def add_evidence(self, client, name, description, image, pos='all'):
         if self.login(client):
             if client.area.evidence_mod == 'FFA':
@@ -120,13 +187,10 @@ class EvidenceList:
                 nums_list.append(i + 1)
                 evi = self.evidences[i]
                 evi_list.append(self.Evidence(evi.name, '<owner={}>\n{}'.format(
-                    evi.pos, evi.desc), evi.image, evi.pos).to_string())
-            elif self.evidences[i].pos != "hidden":
-                if self.evidences[i].pos == "all" or \
-                  client.pos == self.evidences[i].pos or \
-                  client.pos in self.poses[self.evidences[i].pos]:
-                    nums_list.append(i + 1)
-                    evi_list.append(self.evidences[i].to_string())
+                    evi.pos, evi.desc), evi.image, evi.pos).to_tuple())
+            elif self.visible(self.evidences[i], client):
+                nums_list.append(i + 1)
+                evi_list.append(self.evidences[i].to_tuple())
         return nums_list, evi_list
 
     def del_evidence(self, client, evi_id):
@@ -135,14 +199,19 @@ class EvidenceList:
 
     def edit_evidence(self, client, evi_id, arg):
         if self.login(client):
-            if client.area.evidence_mod == 'FFA' and self.correct_format(client, arg[1]):
-                self.evidences[evi_id] = self.Evidence(arg[0], arg[1][14:], arg[2], arg[1][9:12])
+            name = arg[0]
+            desc = arg[1]
+            image = arg[2]
+            pos = arg[3]
+            if client.area.evidence_mod == 'FFA' and self.correct_format(client, desc):
+                desc, pos, can_hide_in, show_in_dark, can_take, editable = self.parse_desc(desc)
+                self.evidences[evi_id] = self.Evidence(name, desc, image, pos)
                 return
-            if client.area.evidence_mod == 'FFA':
+            if client.area.evidence_mod == 'FFA' and (client.is_cm or client.is_gm or client.is_mod):
                 client.send_ooc("""
 You entered a bad pos - evidence hidden!
 Make sure to have <owner=pos> at the top, where "pos" is the /pos this evidence should show up in.
 Put in "all" if you want it to show up in all pos, or "hidden" for no pos.
 """)
-                arg[3] = "hidden"
-            self.evidences[evi_id] = self.Evidence(arg[0], arg[1], arg[2], arg[3])
+                pos = "hidden"
+            self.evidences[evi_id] = self.Evidence(name, desc, image, pos)

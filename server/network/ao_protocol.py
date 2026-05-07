@@ -276,6 +276,10 @@ class AOProtocol(asyncio.Protocol):
         command, *args = Constants.encode_ao_packet([command] + list(args))
         message = f'{command}#'
         for arg in args:
+            # Evidence packet uses tuples to construct its evidence entries
+            if type(arg) is tuple:
+                # AO2 evidence packet uses & to separate pieces of evidence
+                arg = "&".join(arg)
             message += f'{arg}#'
         message += '%'
 
