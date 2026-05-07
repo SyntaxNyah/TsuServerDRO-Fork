@@ -127,14 +127,10 @@ class EvidenceList:
 
     def parse_desc(self, desc):
         # Remember to adjust this any time you add a new property
-        num_properties = 5
+        num_properties = 1
         
         lines = desc.split("\n", num_properties)
         poses = "hidden"
-        can_hide_in = 0
-        show_in_dark = 0
-        can_take = 0
-        editable = 0
         matches = 0
         for line in lines:
             cmd = line.strip(" ") # remove all whitespace
@@ -148,28 +144,16 @@ class EvidenceList:
                         value = "hidden"
                     poses = value
                     matches += 1
-                if key == "can_hide_in":
-                    can_hide_in = value == "1"
-                    matches += 1
-                if key == "show_in_dark":
-                    show_in_dark = int(value)
-                    matches += 1
-                if key == "can_take":
-                    can_take = value == "1"
-                    matches += 1
-                if key == "editable":
-                    editable = value == "1"
-                    matches += 1
         # Remvoes N lines, where N is how many <> we matched. Can't be more than 3.
         while matches > 0:
             # Truncates from the start of newline
             desc = desc[desc.find("\n")+1:]
             matches -= 1
-        return desc, poses, can_hide_in, show_in_dark, can_take, editable
+        return desc, poses
 
     def add_evidence(self, client, name, description, image, pos='all'):
         if self.login(client):
-            if client.area.evidence_mod == 'FFA':
+            if (client.is_cm or client.is_gm or client.is_mod):
                 pos = 'hidden'
             self.evidences.append(self.Evidence(name, description, image, pos))
 
@@ -181,7 +165,7 @@ class EvidenceList:
         evi_list = []
         nums_list = [0]
         for i in range(len(self.evidences)):
-            if client.area.evidence_mod == 'FFA' and (client.is_cm or client.is_gm or client.is_mod):
+            if (client.is_cm or client.is_gm or client.is_mod):
                 nums_list.append(i + 1)
                 evi = self.evidences[i]
                 evi_list.append(self.Evidence(evi.name, '<owner={}>\n{}'.format(
@@ -201,11 +185,11 @@ class EvidenceList:
             desc = arg[1]
             image = arg[2]
             pos = arg[3]
-            if client.area.evidence_mod == 'FFA' and self.correct_format(client, desc):
-                desc, pos, can_hide_in, show_in_dark, can_take, editable = self.parse_desc(desc)
+            if self.correct_format(client, desc):
+                desc, pos = self.parse_desc(desc)
                 self.evidences[evi_id] = self.Evidence(name, desc, image, pos)
                 return
-            if client.area.evidence_mod == 'FFA' and (client.is_cm or client.is_gm or client.is_mod):
+            if (client.is_cm or client.is_gm or client.is_mod):
                 client.send_ooc("""
 You entered a bad pos - evidence hidden!
 Make sure to have <owner=pos> at the top, where "pos" is the /pos this evidence should show up in.
