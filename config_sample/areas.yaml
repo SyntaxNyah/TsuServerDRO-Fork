@@ -21,6 +21,7 @@
 # *evidence_mod: The mode by which evidence is handled for this area. Available modes are:
 #  - "FFA": allows people to create/remove evidence. Positional evidence is also implemented - evidence appears in the position the client created it in.
 #           Presenting evidence reveals it for everyone. CM's/GM's/Mods can modify positions the evidence appears in by editing the <owner=pos> bracket.
+#           You may also support multiple postions, for example <owner=def,wit,pro> will show it in all the listed pos.
 #  - "Mods": only Mods can add/modify/remove evidence.
 #  - "CM": only CM's/GM's/Mods can add/modify/remove evidence.
 # *gm_iclock_allowed: If false, only CM+ may /iclock the area. If true, GMs may also /iclock.
