@@ -18,7 +18,11 @@
 # *cbg_allowed: If false, only GM+ can set the area's background to one not in the hub's list. If true, no such restriction is imposed.
 # *change_reachability_allowed: If false, only GM+ may /unilock or /bilock passages affecting this area. If true, no such restriction is imposed.
 # *default_description: Output of /look in the area if no custom description is in place via /look_set
-# *evidence_mod: Unused (do not include)
+# *evidence_mod: The mode by which evidence is handled for this area. Available modes are:
+#  - "FFA": allows people to create/remove evidence. Positional evidence is also implemented - evidence appears in the position the client created it in.
+#           Presenting evidence reveals it for everyone. CM's/GM's/Mods can modify positions the evidence appears in by editing the <owner=pos> bracket.
+#  - "Mods": only Mods can add/modify/remove evidence.
+#  - "CM": only CM's/GM's/Mods can add/modify/remove evidence.
 # *gm_iclock_allowed: If false, only CM+ may /iclock the area. If true, GMs may also /iclock.
 # *iniswap_allowed: If true, everyone can send IC messages while iniswapped/iniedited; if false, no one can send IC messages while iniswapped/iniedited.
 # *global_allowed: If false, only CM+ may use /g in the area. If true, anyone can use it.
@@ -80,6 +84,15 @@
   lobby_area: true
   scream_range: Class Trial Room 1
   default_description: The basement and default area.
+  evidence:
+  - name: Blank Evidence
+    desc: Hello there! I'm a blank evidence. Change me!
+    image: empty.png
+    pos: all
+  - name: More Blank Evidence
+    desc: Okay, this is getting RIDICULOUS!
+    image: empty.png
+    pos: all
 - area: Class Trial Room 1
   background: Class Trial Debate Room V3-1_HD
   bglock: false
@@ -125,7 +138,7 @@
     day: Class Trial Debate Room DR1-1_HD
     night: Class Trial Debate Room DR1-2_HD
   bglock: false
-  evidence_mod: HiddenCM
+  evidence_mod: FFA
   locking_allowed: true
   iniswap_allowed: true
   reachable_areas: Class Trial Room 3

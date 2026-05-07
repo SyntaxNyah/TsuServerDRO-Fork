@@ -867,8 +867,9 @@ class ClientManager:
             self.send_investigation()
 
         def send_evidence_list(self):
+            evidence_list = self.area.get_evidence_list(self)
             self.send_command_dict('LE', {
-                'evidence_ao2_list': self.area.get_evidence_list(self)
+                'evidence_ao2_list': evidence_list
             })
 
         def send_health(self, side=None, health=None):
@@ -2024,8 +2025,7 @@ class ClientManager:
             auth_command(arg, announce_to_officers=announce_to_officers)
 
             # The following actions are true for all logged in roles
-            if self.area.evidence_mod == 'HiddenCM':
-                self.area.broadcast_evidence_list()
+            self.area.broadcast_evidence_list()
             self.send_music_list_view()  # Update music list to show all areas
 
             self.send_ooc('Logged in as a {}.'.format(role))
@@ -2153,8 +2153,7 @@ class ClientManager:
             self.is_cm = False
 
             # Clean-up operations
-            if self.area.evidence_mod == 'HiddenCM':
-                self.area.broadcast_evidence_list()
+            self.area.broadcast_evidence_list()
 
             # Update the music list to show reachable areas and activate the AFK timer
             self.send_music_list_view()

@@ -154,6 +154,9 @@ class AreaManager(AssetManager):
             self.bullet = parameters['bullet']
             self.visible_areas = parameters['visible_areas']
 
+            if 'evidence' in parameters:
+                self.evi_list.import_evidence(parameters['evidence'])
+
             # Store the current description separately from the default description
             self.description = self.default_description
 
