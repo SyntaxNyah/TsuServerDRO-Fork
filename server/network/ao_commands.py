@@ -443,11 +443,6 @@ def net_cmd_ms(client: ClientManager.Client, pargs: Dict[str, Any]):
         return
     if pargs['color'] == 5 and not client.is_officer():
         pargs['color'] = 0
-    if client.pos:
-        pargs['pos'] = client.pos
-    else:
-        if pargs['pos'] not in ('def', 'pro', 'hld', 'hlp', 'jud', 'wit'):
-            return
 
     if 'showname' in pargs:
         try:
