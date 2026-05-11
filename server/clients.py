@@ -284,7 +284,7 @@ class DefaultDROProtocol():
         ('video', '0'),  # 16
         ('hide_character', 0),  # 17
         ('client_id', -1),  # 18
-        ('offset_h', 0),  # 19
+        ('offset_h', 500),  # 19
         ('offset_v', 0),  # 20
         ('offset_s', 1000),  # 21
         ('outfit_name', ''), #22
