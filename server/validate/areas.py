@@ -65,6 +65,8 @@ class ValidateAreas(Validate):
             'rp_getareas_allowed': True,
             'scream_range': '',
             'song_switch_allowed': False,
+            'legacy_message_delay': False,
+            'minimum_message_interval': 0,
         }
 
         current_area_id = 0
