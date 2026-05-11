@@ -73,8 +73,9 @@ class TsuserverDR:
         self.major_version = 5
         self.minor_version = 0
         self.segment_version = ''
-        # I wish someone explained to me what the "internal version" is supposed to be and how to calculate it :(
-        self.internal_version = '250700a'
+        # YYMMDDa where a corresponds to the number of commits pushed to the target branch.
+        # This is too complex to calculate manually so it should be automated in the future
+        self.internal_version = '260511a'
         version_string = self.get_version_string()
         self.software = 'TsuserverDR {}'.format(version_string)
         self.version = 'TsuserverDR {} ({})'.format(version_string, self.internal_version)
