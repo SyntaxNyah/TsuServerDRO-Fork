@@ -909,8 +909,7 @@ class AreaManager(AssetManager):
                         if raise_if_not_found:
                             raise
 
-            if 'name' not in pargs:
-                pargs['name'] = name
+            pargs['name'] = name
             if 'char_id' not in pargs:
                 pargs['char_id'] = client.char_id
             if 'fade_option' not in pargs:
