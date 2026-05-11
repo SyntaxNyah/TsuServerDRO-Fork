@@ -191,7 +191,10 @@ def net_cmd_id(client: ClientManager.Client, pargs: Dict[str, Any]):
         elif software == 'AO2':  # AO2 protocol
             if release == 2:
                 if major >= 10:
-                    client.packet_handler = clients.ClientAO2d10()
+                    if minor >= 1:
+                        client.packet_handler = clients.ClientAO2d10d1()
+                    else:
+                        client.packet_handler = clients.ClientAO2d10()
                 else:
                     return False  # Unrecognized
             else:
@@ -1283,6 +1286,43 @@ def net_cmd_pw(self, _):
     # but not code is run.
     return
 
+
+def net_cmd_tt(client: ClientManager.Client, pargs: Dict[str, Any]):
+    """
+    Sended when the client is typing on the IC chat.
+
+    TT#<state: int>#<char_name:str>#<emote_name:str>#%
+    
+    state:      0 = stopped typing
+            |   1 = typing
+    
+    Client implementation details:
+    The state is cleared after the client sends the IC message.
+    Also cleared after 100-200ms of inactivity.
+    """
+    #Grab required arguments from packet
+    state = pargs['state']
+    char_name = pargs['char_name']
+    # emote_name is a packet argument that may or may not exist
+    emote_name = pargs['emote_name'] if 'emote_name' in pargs else ''
+
+    if state in (0, 1):
+        clients = (c for c in client.area.clients if c.id != client.id)
+        for target in clients:
+            target.send_command_dict('TT', {
+                'state': state,
+                'char_name': char_name,
+                # TODO: figure out why emote_name is ignored and passed as if it's blank to the client
+                'emote_name': emote_name,
+            })
+
+
+def net_cmd_cu(self, _):
+    # Ignore packet
+    # Character URLs are not implemented the way AOGolden does it
+    return
+
+
 def net_cmd_status(client: ClientManager.Client, pargs: Dict[str, Any]):
     """ User Status Update
 
@@ -1305,7 +1345,3 @@ def net_cmd_status(client: ClientManager.Client, pargs: Dict[str, Any]):
                 'status_type': pargs['status_type'],
                 'status_value': pargs['status_value'],
             })
-
-
-
-    

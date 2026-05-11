@@ -353,6 +353,10 @@ class AOProtocol(asyncio.Protocol):
                        needs_auth=False),  # pair offset
         'PAIR': _command(function=ao_commands.net_cmd_pair,
                        needs_auth=False),  # Pair
+        'TT': _command(function=ao_commands.net_cmd_tt,
+                       needs_auth=False),  # message typing packet
+        'CU': _command(function=ao_commands.net_cmd_cu,
+                       needs_auth=False),  # character url packet
         'PAIRL': _command(function=ao_commands.net_cmd_pairl,
                        needs_auth=False),  # Pair
         'STATUS': _command(function=ao_commands.net_cmd_status,

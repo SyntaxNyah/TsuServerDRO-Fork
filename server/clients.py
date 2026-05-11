@@ -32,7 +32,7 @@ class DefaultDROProtocol():
     def __eq__(self, other):
         return type(self).__name__ == type(other).__name__
 
-    VERSION_TO_SEND = [1, 8, 0]
+    VERSION_TO_SEND = [1, 8, 2]
 
     HAS_CLIENTSIDE_MUSIC_LOOPING = True
     HAS_DISTINCT_AREA_AND_MUSIC_LIST_OUTGOING_PACKETS = True
@@ -421,6 +421,10 @@ class DefaultDROProtocol():
     ]
 
 
+class ClientDRO1d8d0(DefaultDROProtocol):
+    VERSION_TO_SEND = [1, 8, 0]
+
+
 class ClientDRO1d7d0(DefaultDROProtocol):
     VERSION_TO_SEND = [1, 7, 0]
 
@@ -647,6 +651,7 @@ class ClientAO2d10(DefaultDROProtocol):
     REPLACES_BASE_OPUS_FOR_MP3 = True
     ALLOWS_CHAR_LIST_RELOAD = True
     HAS_HIDE_CHARACTER_AS_MS_ARGUMENT = False
+    HAS_CLIENTSIDE_MUSIC_LOOPING = True
 
     MS_INBOUND = [
         ('msg_type', ArgType.STR),  # 0
@@ -734,5 +739,41 @@ class ClientAO2d10(DefaultDROProtocol):
     PW_INBOUND = [
         ('password', ArgType.STR_OR_EMPTY),  # 0
     ]
+
+    FM_OUTBOUND = [
+        ('legacy_music_ao2_list', list()),  # 0
+    ]
+
+    SM_OUTBOUND = [
+        ('legacy_music_ao2_list', list()),  # 0
+    ]
+
+
+class ClientAO2d10d1(ClientAO2d10):
+    # This is actually part of AO Golden, but development ceased and the version packet was not updated.
+    TT_INBOUND = [
+        ('state', ArgType.INT),  # 0
+        ('char_name', ArgType.STR),  # 1
+        ('emote_name', ArgType.STR, True),  # 2, optional
+    ]
+    TT_OUTBOUND = [
+        ('state', 0),  # 0
+        ('char_name', ''),  # 1
+        ('emote_name', ''),  # 2
+    ]
+
+    CU_INBOUND = [
+        ('authority', ArgType.INT),  # 0
+        ('action', ArgType.INT),  # 1
+        ('char_name', ArgType.STR),  # 2
+        ('link', ArgType.STR),  # 3
+    ]
+
+    CU_OUTBOUND = [
+        ('authority', 0),  # 0
+        ('action', 0),  # 1
+        ('char_name', ''),  # 2
+        ('link', ''),  # 3
+    ]
     
-ClientAO2latest = ClientAO2d10
+ClientAO2latest = ClientAO2d10d1
