@@ -395,7 +395,13 @@ def net_cmd_ms(client: ClientManager.Client, pargs: Dict[str, Any]):
             and not client.can_bypass_iclock):
         client.send_ooc('The IC chat in this area is currently locked.')
         return
+    # area-wide rate limiting
     if not client.area.can_send_message():
+        return
+    # individual rate limiting
+    if not client.can_send_message():
+        _, remaining = Constants.time_remaining(client.last_ic_message_time, client.area.minimum_message_interval)
+        client.send_ooc(f"Please wait {remaining} before sending another message.")
         return
     # Trim out any leading/trailing whitespace characters up to a chain of spaces
     pargs['text'] = Constants.trim_extra_whitespace(pargs['text'])
@@ -672,6 +678,7 @@ def net_cmd_ms(client: ClientManager.Client, pargs: Dict[str, Any]):
             target_area.add_to_shoutlog(client, info)
 
     client.area.set_next_msg_delay(len(msg))
+    client.last_ic_message_time = time.time()
     logger.log_server(
         f'[IC][{client.area.id}][{client.get_char_name()}]{msg}', client)
 

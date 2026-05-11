@@ -190,6 +190,9 @@ class ClientManager:
             # modifications that it may have undergone afterwards (say, via gimp, gag, etc.)
             self.last_ic_char = ''  # The char they used to send their last IC message, not
             # necessarily equivalent to self.get_char_name()
+            
+            # the time since last ic message was sent by this person.
+            self.last_ic_message_time = 0.0
 
             # music flood-guard stuff
             self.mute_time = 0
@@ -2316,6 +2319,9 @@ class ClientManager:
                     raise ClientError(
                         'You have not provided a download link for your files.')
             self.send_player_list_to_area()
+        
+        def can_send_message(self):
+            return (time.time() - self.last_ic_message_time) >= self.area.minimum_message_interval
 
         def get_info(self, as_mod: bool = False, as_cm: bool = False, identifier=None):
             if identifier is None:

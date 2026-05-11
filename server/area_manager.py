@@ -153,6 +153,8 @@ class AreaManager(AssetManager):
             self.song_switch_allowed = parameters['song_switch_allowed']
             self.bullet = parameters['bullet']
             self.visible_areas = parameters['visible_areas']
+            self.legacy_message_delay = parameters['legacy_message_delay']
+            self.minimum_message_interval = parameters['minimum_message_interval']
 
             if 'evidence' in parameters:
                 self.evi_list.import_evidence(parameters['evidence'])
@@ -799,20 +801,27 @@ class AreaManager(AssetManager):
             """
             Set a message delay for the next IC message in the area based on the length of the
             current message, so new messages sent before this delay expires are discarded.
+            DEPRECATED unless legacy_message_delay area pref is set to true.
 
             Parameters
             ----------
             msg_length: int
                 Length of the current message.
             """
-
-            delay = min(3000, 100 + 60 * msg_length)
+            # rate limiting is effectively disabled unless "legacy_message_delay" is enabled
+            # to support legacy clients at expense of the newer ones (spam enter to send msg is back)
+            delay = 0
+            if self.legacy_message_delay:
+                # Legacy delay is hard-coded to the minimum of 100ms and a maximum of 3 seconds.
+                # Calculates at 60ms delay per symbol.
+                delay = min(3000, 100 + 60 * msg_length)
             self.next_message_time = round(time.time() * 1000.0 + delay)
 
         def can_send_message(self) -> bool:
             """
             Decide if an incoming IC message does not violate the area's established delay for
             the previously received IC message.
+            DEPRECATED unless legacy_message_delay area pref is set to true.
 
             Returns
             -------
