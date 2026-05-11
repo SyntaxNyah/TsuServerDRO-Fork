@@ -57,6 +57,14 @@ class MasterServerClient():
 
         self._ms_ip: str = self.server.config['masterserver_ip']
         self._own_port: int = self.server.config['port']
+        self._own_ws_enabled: bool = self.server.config.get("ws_enabled")
+
+        if self._own_ws_enabled:
+            if self.server.config.get("ws_override_port") != -1:
+                self._own_ws_port: int = self.server.config['ws_override_port']
+            else:
+                self._own_ws_port: int = self.server.config['ws_port']
+                
         self._own_name: str = self.server.config['masterserver_name']
         self._own_description: str = self.server.config['masterserver_description']
 
@@ -81,6 +89,10 @@ class MasterServerClient():
             "name": name,
             "description": description
         }
+        
+        if self._own_ws_enabled:
+            content['ws_port'] = self._own_ws_port
+        
         return content
 
     async def _post_json(self,

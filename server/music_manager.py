@@ -234,9 +234,11 @@ class MusicManager(AssetManager):
         return new_list.copy()
 
     def get_music_data(self, music: str) -> Tuple[str, int, str]:
+        if music == '' or music == '~stop.mp3':
+            return '', -1, ''
         for item in self.get_music():
             if item['category'] == music:
-                return item['category'], -1, ''
+                return '', -1, ''
             for song in item['songs']:
                 if song['name'] == music:
                     name = song['name']

@@ -58,7 +58,7 @@ def ooc_cmd_ambient(client: ClientManager.Client, arg: str):
     Sets the ambient sound effect of the area to `wind.wav`.
     """
 
-    Constants.assert_command(client, arg, is_staff=True, parameters='>0')
+    Constants.assert_command(client, arg, is_staff=False, parameters='>0')
 
     client.area.ambient = arg
 
@@ -91,7 +91,7 @@ def ooc_cmd_ambient_end(client: ClientManager.Client, arg: str):
     Clears the ambient sound effect of the area.
     """
 
-    Constants.assert_command(client, arg, is_staff=True, parameters='=0')
+    Constants.assert_command(client, arg, is_staff=False, parameters='=0')
 
     if not client.area.ambient:
         raise ClientError(
@@ -2940,6 +2940,7 @@ def ooc_cmd_g(client: ClientManager.Client, arg: str):
         raise ClientError('You have the global chat muted.')
 
     client.server.broadcast_global(client, arg)
+
     logger.log_server('[{}][{}][GLOBAL]{}.'
                       .format(client.area.id, client.get_char_name(), arg), client)
 
@@ -3625,7 +3626,11 @@ def ooc_cmd_hub(client: ClientManager.Client, arg: str):
         except HubError.ManagerInvalidGameIDError:
             raise HubError.ManagerInvalidGameIDError('Hub not found.')
 
-        client.change_hub(hub, from_party=(client.party is not None))
+        if hub.invite_pass == "":
+            client.change_hub(hub, from_party=(client.party is not None))
+        else:
+            raise HubError.ManagerInvalidGameIDError('Hub not found.')
+
 
 
 def ooc_cmd_hub_create(client: ClientManager.Client, arg: str):
@@ -7323,7 +7328,7 @@ def ooc_cmd_play(client: ClientManager.Client, arg: str):
                           f'{Constants.time_format(delay)}.')
 
     track_name = arg
-    fade_option = FadeOption.NO_FADE
+    fade_option = FadeOption.SMOOTH_PLAY
 
     try:
         arg_list = arg.split()
@@ -7345,8 +7350,7 @@ def ooc_cmd_play(client: ClientManager.Client, arg: str):
     try:
         client.music_manager.get_music_data(track_name)
     except MusicError.MusicNotFoundError:
-        client.send_ooc(f'Warning: `{track_name}` is not a recognized track name, so the server will not '
-                        f'loop it.')
+        client.send_ooc(f'Warning: `{track_name}` is not a recognized track name.')
 
 
 def ooc_cmd_pm(client: ClientManager.Client, arg: str):
@@ -8015,7 +8019,7 @@ def ooc_cmd_rplay(client: ClientManager.Client, arg: str):
              for reachable_area_name in client.area.visible_areas}
 
     track_name = arg
-    fade_option = FadeOption.NO_FADE
+    fade_option = FadeOption.SMOOTH_PLAY
 
     try:
         arg_list = arg.split()
@@ -8043,8 +8047,7 @@ def ooc_cmd_rplay(client: ClientManager.Client, arg: str):
     try:
         client.music_manager.get_music_data(track_name)
     except MusicError.MusicNotFoundError:
-        client.send_ooc(f'(X) Warning: `{track_name}` is not a recognized track name, so the server will '
-                        f'not loop it.')
+        client.send_ooc(f'(X) Warning: `{track_name}` is not a recognized track name.')
 
 
 def ooc_cmd_scream(client: ClientManager.Client, arg: str):
@@ -11969,7 +11972,7 @@ def ooc_cmd_zone_play(client: ClientManager.Client, arg: str):
         raise ZoneError('You are not watching a zone.')
 
     track_name = arg
-    fade_option = FadeOption.NO_FADE
+    fade_option = FadeOption.SMOOTH_PLAY
 
     try:
         arg_list = arg.split()
@@ -11992,8 +11995,7 @@ def ooc_cmd_zone_play(client: ClientManager.Client, arg: str):
     try:
         client.music_manager.get_music_data(track_name)
     except MusicError.MusicNotFoundError:
-        client.send_ooc(f'(X) Warning: `{track_name}` is not a recognized track name, so the server will '
-                        f'not loop it.')
+        client.send_ooc(f'(X) Warning: `{track_name}` is not a recognized track name.')
 
 
 def ooc_cmd_zone_set_legacy_jukebox(client: ClientManager.Client, arg: str):
@@ -12491,3 +12493,95 @@ def ooc_cmd_hide_icon(client: ClientManager.Client, arg: str):
         status = {False: 'disabled', True: 'enabled'}
         message = f'You have {status[client.icon_visible]} your character icon.'
     client.send_ooc(message)
+
+
+def ooc_cmd_set_weather(client: ClientManager.Client, arg: str):
+    """
+    Set the weather in an area
+
+    SYNTAX
+    /set_weather <range_start> <range_end> <name>
+    """
+    
+    args = arg.split(' ')
+    
+    range_start, range_end, weather_name = args
+    areas = Constants.parse_two_area_names(client, [range_start, range_end], check_valid_range=True)
+
+
+    for i in range(areas[0].id, areas[1].id+1):
+        area = client.hub.area_manager.get_area_by_id(i)
+        area.weather = weather_name
+        area.broadcast_weather()
+    
+    client.send_ooc('You have set the weather in the specified areas to `{}`.'.format(weather_name))
+
+def ooc_cmd_zone_weather(client: ClientManager.Client, arg: str):
+    """ (STAFF ONLY)
+
+    SYNTAX
+    /zone_weather <weather_name>
+
+    PARAMETERS
+    <weather_name>: Weather to set in zone
+    """
+
+    try:
+        Constants.assert_command(client, arg, is_staff=True, parameters='>0')
+    except ArgumentError:
+        raise ArgumentError('You must specify a weather name.')
+
+    if not client.zone_watched:
+        raise ZoneError('You are not watching a zone.')
+
+    weather_name = arg
+
+    for zone_area in client.zone_watched.get_areas():
+        zone_area.weather = weather_name
+        zone_area.broadcast_weather()
+
+    client.send_ooc('You have set the weather in your zone to `{}`.'.format(weather_name))
+
+
+def ooc_cmd_hub_privatize(client: ClientManager.Client, arg: str):
+    Constants.assert_command(client, arg, is_staff=True)
+
+    letters = string.ascii_letters + string.digits
+    client.hub.invite_pass = ''.join(random.choice(letters) for i in range(6))
+    client.send_ooc('You have privatized the hub. The new password is `{}_{}`.'.format(client.hub.get_id()[1:], client.hub.invite_pass))
+
+def ooc_cmd_hub_access(client: ClientManager.Client, arg: str):
+    
+    args = arg.split('_')
+    
+    hub_id, password = args
+
+    try:
+        hub = client.hub.manager.get_managee_by_numerical_id(hub_id)
+    except HubError.ManagerInvalidGameIDError:
+        raise ClientError(f'Password {arg} does not belong to any hubs.')
+
+    if hub.invite_pass != password:
+        raise ClientError(f'Password {arg} does not belong to any hubs.')
+
+    if client.ipid in hub.allowed_clients:
+        client.send_ooc('You already have access to the hub `{}`.'.format(hub.get_name()))
+        return
+
+    hub.allowed_clients.append(client.ipid)
+    client.send_ooc('You have gained access to the hub `{}`.'.format(hub.get_name()))
+    client.change_hub(hub, from_party=(client.party is not None))
+
+def ooc_cmd_hub_toggle_streaming(client: ClientManager.Client, arg: str):
+    Constants.assert_command(client, arg, is_staff=True)
+
+    client.hub.allow_streaming = not client.hub.allow_streaming
+    status = 'enabled' if client.hub.allow_streaming else 'disabled'
+    client.send_ooc(f'You have {status} music streaming in the hub.')
+
+def ooc_cmd_hub_toggle_global(client: ClientManager.Client, arg: str):
+    Constants.assert_command(client, arg, is_staff=True)
+
+    client.hub.allow_global = not client.hub.allow_global
+    status = 'enabled' if client.hub.allow_global else 'disabled'
+    client.send_ooc(f'You have {status} hub wide global chat.')

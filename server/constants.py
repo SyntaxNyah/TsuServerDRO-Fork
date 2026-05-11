@@ -63,15 +63,15 @@ FADE_MIX: A combination of FadeIn and FadeOut.
 
 
 class FadeOption(IntEnum):
-    NO_FADE = 0
-    FADE_IN = 1
-    FADE_OUT = 2
+    SMOOTH_PLAY = 0
+    INSTANT_PLAY = 1
+    SYNC_PLAY = 2
     FADE_MIX = 3
 
     # aliases
-    IN = FADE_IN
-    OUT = FADE_OUT
-    MIX = FADE_MIX
+    SMOOTH = SMOOTH_PLAY
+    INSTANT = INSTANT_PLAY
+    SYNC = SYNC_PLAY
 
     @staticmethod
     def from_str(in_str: str):
@@ -305,11 +305,27 @@ class Constants():
 
     @staticmethod
     def encode_ao_packet(params: List) -> List[str]:
-        new_params = [
-            (str(arg).replace('#', '<num>').replace('%', '<percent>')
-             .replace('$', '<dollar>').replace('&', '<and>'))
-            for arg in params
-        ]
+        new_params = []
+        for arg in params:
+            if type(arg) is tuple:
+                encoded = []
+                for tup in arg:
+                    encoded.append(
+                        str(tup)
+                        .replace("#", "<num>")
+                        .replace("%", "<percent>")
+                        .replace("$", "<dollar>")
+                        .replace("&", "<and>")
+                    )
+                new_params.append(tuple(encoded))
+            else:
+                new_params.append(
+                    str(arg)
+                    .replace("#", "<num>")
+                    .replace("%", "<percent>")
+                    .replace("$", "<dollar>")
+                    .replace("&", "<and>")
+                )
         return new_params
 
     @staticmethod

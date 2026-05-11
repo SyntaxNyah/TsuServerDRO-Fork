@@ -1905,6 +1905,10 @@ class _Hub(_HubTrivialInherited):
         self._password = str(secrets.randbelow(9000) + 1000)  # Cute trick to get 4-digit number
 
         self.manager: HubManager  # Setting for typing
+        self.invite_pass = ""
+        self.allowed_clients = []
+        self.allow_global = True
+        self.allow_streaming = False
 
     def get_type_name(self) -> str:
         """
@@ -3128,6 +3132,11 @@ class HubManager(_HubManagerTrivialInherited):
 
         for (num_id, hub) in self.get_managee_numerical_ids_to_managees().items():
             name = hub.get_name()
+            
+            if hub.invite_pass:
+                if client.ipid not in hub.allowed_clients and not client.is_mod:
+                    continue 
+
             if not name:
                 name = hub.get_id()
 

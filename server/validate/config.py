@@ -59,6 +59,9 @@ class ValidateConfig(Validate):
                        f'found it was not. Please make sure it is set and try again.')
                 raise ServerError.FileSyntaxError(err)
 
+        if 'strict_client_check' not in contents:
+            contents['strict_client_check'] = False
+
         # Check mandatory passwords are defined
         mandatory_passwords = ['modpass', 'cmpass', 'gmpass']
         for password in mandatory_passwords:
@@ -139,6 +142,7 @@ class ValidateConfig(Validate):
             'spectator_name': str,
 
             'music_change_floodguard': dict,
+            'strict_client_check': bool,
         }
 
         for (field_name, field_type) in expected_types.items():

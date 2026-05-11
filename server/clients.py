@@ -28,11 +28,11 @@ class _Singleton():
         return cls.instance
 
 
-class DefaultDROProtocol(_Singleton):
+class DefaultDROProtocol():
     def __eq__(self, other):
         return type(self).__name__ == type(other).__name__
 
-    VERSION_TO_SEND = [1, 3, 0]
+    VERSION_TO_SEND = [1, 8, 0]
 
     HAS_CLIENTSIDE_MUSIC_LOOPING = True
     HAS_DISTINCT_AREA_AND_MUSIC_LIST_OUTGOING_PACKETS = True
@@ -47,6 +47,7 @@ class DefaultDROProtocol(_Singleton):
 
     DECRYPTOR_OUTBOUND = [
         ('key', 34),  # 0
+        ('last_msg_id', 0)
     ]
 
     HI_INBOUND = [
@@ -147,6 +148,36 @@ class DefaultDROProtocol(_Singleton):
         ('unknown', 1),  # 0
     ]
 
+    PAIRL_INBOUND = [
+        ('layer_position', ArgType.INT), 
+    ]
+
+    STATUS_INBOUND = [
+        ('status_type', ArgType.INT), 
+        ('status_value', ArgType.INT), 
+    ]
+
+    STATUS_OUTBOUND = [
+        ('user_id', ArgType.INT), 
+        ('status_type', ArgType.INT), 
+        ('status_value', ArgType.INT), 
+    ]
+
+    WEA_OUTBOUND = [
+        ('name', ''),  # 0
+        ('environment_name', 'outdoors'),  # 0
+    ]
+
+    INVES_OUTBOUND = [
+        ('enc_text', ArgType.STR), 
+    ]
+
+    SCENE_OUTBOUND = [
+        ('area_name', ArgType.STR), 
+        ('bg_image', ArgType.STR), 
+        ('map', ArgType.STR), 
+    ]
+
     PR_INBOUND = [
         ('partner_target', ArgType.INT), 
     ]
@@ -204,12 +235,14 @@ class DefaultDROProtocol(_Singleton):
     ACKMS_OUTBOUND = [
     ]
 
+
+
     MS_INBOUND = [
         ('msg_type', ArgType.STR),  # 0
         ('pre', ArgType.STR_OR_EMPTY),  # 1
         ('folder', ArgType.STR),  # 2
         ('anim', ArgType.STR),  # 3
-        ('text', ArgType.STR),  # 4
+        ('text', ArgType.STR_OR_EMPTY),  # 4
         ('pos', ArgType.STR),  # 5
         ('sfx', ArgType.STR_OR_EMPTY),  # 6
         ('anim_type', ArgType.INT),  # 7
@@ -222,7 +255,13 @@ class DefaultDROProtocol(_Singleton):
         ('color', ArgType.INT),  # 14
         ('showname', ArgType.STR_OR_EMPTY),  # 15
         ('video', ArgType.STR_OR_EMPTY),  # 16
-        ('hide_character', ArgType.INT),  # 17
+        ('hide_character', ArgType.INT),  # 17  
+        ('offset_h', ArgType.INT),  # 18
+        ('offset_v', ArgType.INT),  # 19
+        ('offset_s', ArgType.INT),  # 20 
+        ('outfit_name', ArgType.STR_OR_EMPTY), # 21
+        ('keyframe_sequence', ArgType.STR_OR_EMPTY), #22
+        ('sprite_layers', ArgType.STR_OR_EMPTY), 
     ]
 
     MS_OUTBOUND = [
@@ -245,6 +284,18 @@ class DefaultDROProtocol(_Singleton):
         ('video', '0'),  # 16
         ('hide_character', 0),  # 17
         ('client_id', -1),  # 18
+        ('offset_h', 500),  # 19
+        ('offset_v', 0),  # 20
+        ('offset_s', 1000),  # 21
+        ('outfit_name', ''), #22
+        ('keyframe_sequence', ''), #23
+        ('sprite_layers', ''),
+    ]
+    
+    CHRINI_INBOUND = [
+        ('actual_folder_name', ArgType.STR),  # 0
+        ('actual_character_showname', ArgType.STR),  # 1
+        ('character_outfit', ArgType.STR),  # 2
     ]
 
     MC_INBOUND = [
@@ -351,11 +402,6 @@ class DefaultDROProtocol(_Singleton):
         ('showname', ''),  # 0
     ]
 
-    CHRINI_INBOUND = [
-        ('actual_folder_name', ArgType.STR),  # 0
-        ('actual_character_showname', ArgType.STR),  # 1
-    ]
-
     CHAT_TICK_RATE_OUTBOUND = [
         ('chat_tick_rate', -1),  # 0
     ]
@@ -374,21 +420,129 @@ class DefaultDROProtocol(_Singleton):
     JOINED_AREA_OUTBOUND = [
     ]
 
-class ClientDRO1d6d0(DefaultDROProtocol):
+
+class ClientDRO1d7d0(DefaultDROProtocol):
+    VERSION_TO_SEND = [1, 7, 0]
+
+    DECRYPTOR_OUTBOUND = [
+        ('key', 34),  # 0,  # 0
+        ('last_msg_id', 0)
+    ]
+    
+    MS_OUTBOUND = [
+        ('msg_type', 0),  # 0
+        ('pre', '-'),  # 1
+        ('folder', '<NOCHAR>'),  # 2
+        ('anim', '../../misc/blank'),  # 3
+        ('msg', ''),  # 4
+        ('pos', 'jud'),  # 5
+        ('sfx', 0),  # 6
+        ('anim_type', 0),  # 7
+        ('char_id', -1),  # 8
+        ('sfx_delay', 0),  # 9
+        ('button', 0),  # 10
+        ('evidence', 0),  # 11
+        ('flip', 0),  # 12
+        ('ding', -1),  # 13
+        ('color', 0),  # 14
+        ('showname', ''),  # 15
+        ('video', '0'),  # 16
+        ('hide_character', 0),  # 17
+        ('client_id', -1),  # 18
+        ('offset_h', 0),  # 19
+        ('offset_v', 0),  # 20
+        ('offset_s', 1000),  # 21
+    ]
+
+    MS_INBOUND = [
+        ('msg_type', ArgType.STR),  # 0
+        ('pre', ArgType.STR_OR_EMPTY),  # 1
+        ('folder', ArgType.STR),  # 2
+        ('anim', ArgType.STR),  # 3
+        ('text', ArgType.STR),  # 4
+        ('pos', ArgType.STR),  # 5
+        ('sfx', ArgType.STR_OR_EMPTY),  # 6
+        ('anim_type', ArgType.INT),  # 7
+        ('char_id', ArgType.INT),  # 8
+        ('sfx_delay', ArgType.INT),  # 9
+        ('button', ArgType.INT),  # 10
+        ('evidence', ArgType.INT),  # 11
+        ('flip', ArgType.INT),  # 12
+        ('ding', ArgType.INT),  # 13
+        ('color', ArgType.INT),  # 14
+        ('showname', ArgType.STR_OR_EMPTY),  # 15
+        ('video', ArgType.STR_OR_EMPTY),  # 16
+        ('hide_character', ArgType.INT),  # 17  
+        ('offset_h', ArgType.INT),  # 18
+        ('offset_v', ArgType.INT),  # 19
+        ('offset_s', ArgType.INT),  # 20
+    ]
+
+class ClientDRO1d6d0(ClientDRO1d7d0):
     VERSION_TO_SEND = [1, 6, 0]
 
-class ClientDRO1d5d0(DefaultDROProtocol):
+    MS_INBOUND = [
+        ('msg_type', ArgType.STR),  # 0
+        ('pre', ArgType.STR_OR_EMPTY),  # 1
+        ('folder', ArgType.STR),  # 2
+        ('anim', ArgType.STR),  # 3
+        ('text', ArgType.STR),  # 4
+        ('pos', ArgType.STR),  # 5
+        ('sfx', ArgType.STR_OR_EMPTY),  # 6
+        ('anim_type', ArgType.INT),  # 7
+        ('char_id', ArgType.INT),  # 8
+        ('sfx_delay', ArgType.INT),  # 9
+        ('button', ArgType.INT),  # 10
+        ('evidence', ArgType.INT),  # 11
+        ('flip', ArgType.INT),  # 12
+        ('ding', ArgType.INT),  # 13
+        ('color', ArgType.INT),  # 14
+        ('showname', ArgType.STR_OR_EMPTY),  # 15
+        ('video', ArgType.STR_OR_EMPTY),  # 16
+        ('hide_character', ArgType.INT),  # 17
+    ]
+
+    MS_OUTBOUND = [
+        ('msg_type', 0),  # 0
+        ('pre', '-'),  # 1
+        ('folder', '<NOCHAR>'),  # 2
+        ('anim', '../../misc/blank'),  # 3
+        ('msg', ''),  # 4
+        ('pos', 'jud'),  # 5
+        ('sfx', 0),  # 6
+        ('anim_type', 0),  # 7
+        ('char_id', -1),  # 8
+        ('sfx_delay', 0),  # 9
+        ('button', 0),  # 10
+        ('evidence', 0),  # 11
+        ('flip', 0),  # 12
+        ('ding', -1),  # 13
+        ('color', 0),  # 14
+        ('showname', ''),  # 15
+        ('video', '0'),  # 16
+        ('hide_character', 0),  # 17
+        ('client_id', -1),  # 18
+    ]
+
+    CHRINI_INBOUND = [
+        ('actual_folder_name', ArgType.STR),  # 0
+        ('actual_character_showname', ArgType.STR),  # 1
+        
+    ]
+
+
+class ClientDRO1d5d0(ClientDRO1d6d0):
     VERSION_TO_SEND = [1, 5, 0]
 
-class ClientDRO1d4d0(DefaultDROProtocol):
+class ClientDRO1d4d0(ClientDRO1d5d0):
     VERSION_TO_SEND = [1, 4, 0]
 
 
-class ClientDRO1d3d0(DefaultDROProtocol):
+class ClientDRO1d3d0(ClientDRO1d4d0):
     VERSION_TO_SEND = [1, 3, 0]
 
 
-class ClientDRO1d2d3(DefaultDROProtocol):
+class ClientDRO1d2d3(ClientDRO1d3d0):
     VERSION_TO_SEND = [1, 2, 3]
     HAS_CLIENTSIDE_MUSIC_LOOPING = False
 
@@ -413,7 +567,7 @@ class ClientDRO1d2d3(DefaultDROProtocol):
     ]
 
 
-class ClientDRO1d2d2(ClientDRO1d2d3):
+class ClientDRO1d2d2(ClientDRO1d3d0):
     VERSION_TO_SEND = [1, 2, 2]
 
 
@@ -500,7 +654,7 @@ class ClientAO2d10(DefaultDROProtocol):
         ('pre', ArgType.STR_OR_EMPTY),  # 1
         ('folder', ArgType.STR),  # 2
         ('anim', ArgType.STR),  # 3
-        ('text', ArgType.STR),  # 4
+        ('text', ArgType.STR_OR_EMPTY),  # 4
         ('pos', ArgType.STR),  # 5
         ('sfx', ArgType.STR),  # 6
         ('anim_type', ArgType.INT),  # 7
@@ -609,3 +763,5 @@ class ClientAO2d10d1(ClientAO2d10):
         ('char_name', ''),  # 2
         ('link', ''),  # 3
     ]
+    
+ClientAO2latest = ClientAO2d10d1

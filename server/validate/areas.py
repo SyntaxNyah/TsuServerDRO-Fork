@@ -53,6 +53,10 @@ class ValidateAreas(Validate):
             'lobby_area': False,
             'locking_allowed': False,
             'private_area': False,
+            'environment_indoors': False,
+            'weather': '',
+            'investigation': '',
+            'map_visual': 'None',
             'reachable_areas': '<ALL>',
             'visible_areas': '<REACHABLE_AREAS>',
             'restricted_chars': '',
@@ -61,6 +65,8 @@ class ValidateAreas(Validate):
             'rp_getareas_allowed': True,
             'scream_range': '',
             'song_switch_allowed': False,
+            'legacy_message_delay': False,
+            'minimum_message_interval': 0,
         }
 
         current_area_id = 0
@@ -220,7 +226,7 @@ class ValidateAreas(Validate):
             if reachable_areas == {'<ALL>'}:
                 reachable_areas = temp_area_names.copy()
 
-            if visible_areas == {'ALL'}:
+            if visible_areas == {'<ALL>'}:
                 visible_areas = temp_area_names.copy()
             elif visible_areas == {'<REACHABLE_AREAS>'}:
                 visible_areas = reachable_areas.copy()

@@ -32,6 +32,7 @@ import json
 import random
 import time
 import typing
+import re
 
 from typing import Any, Callable, Dict, List, Set, Tuple, Union
 
@@ -123,6 +124,10 @@ class AreaManager(AssetManager):
 
             self.name = parameters['area']
             self.background = parameters['background']
+            self.weather = parameters['weather']
+            self.map_visual = parameters['map_visual']
+            self.investigation = parameters['investigation']
+            self.environment_indoors = parameters['environment_indoors']
             self.background_tod = parameters['background_tod']
             self.bg_lock = parameters['bglock']
             self.evidence_mod = parameters['evidence_mod']
@@ -148,6 +153,11 @@ class AreaManager(AssetManager):
             self.song_switch_allowed = parameters['song_switch_allowed']
             self.bullet = parameters['bullet']
             self.visible_areas = parameters['visible_areas']
+            self.legacy_message_delay = parameters['legacy_message_delay']
+            self.minimum_message_interval = parameters['minimum_message_interval']
+
+            if 'evidence' in parameters:
+                self.evi_list.import_evidence(parameters['evidence'])
 
             # Store the current description separately from the default description
             self.description = self.default_description
@@ -262,6 +272,7 @@ class AreaManager(AssetManager):
                             chara_client_info = {}
                             player_stuff.append(str(c.id))
                             chara_client_info["id"] = str(c.id)
+                            chara_client_info["afk"] = str(c.is_afk)
 
                             #Append the Showname
                             ## 1.5
@@ -286,6 +297,9 @@ class AreaManager(AssetManager):
 
                             if(c.files):
                                 chara_client_info["url"] = c.files[1]    
+
+                            if(c.char_outfit):
+                                chara_client_info["outfit"] = c.char_outfit 
 
                             if(c.status):
                                 chara_client_info["status"] = c.status 
@@ -585,6 +599,16 @@ class AreaManager(AssetManager):
 
             self.doc = doc
 
+        def broadcast_investigation(self):
+            for client in self.clients:
+                client.send_investigation()
+
+        def broadcast_weather(self):
+            for client in self.clients:
+                client.send_weather()
+
+
+
         def get_evidence_list(self, client: ClientManager.Client):
             """
             Obtain the evidence list for a client.
@@ -777,20 +801,27 @@ class AreaManager(AssetManager):
             """
             Set a message delay for the next IC message in the area based on the length of the
             current message, so new messages sent before this delay expires are discarded.
+            DEPRECATED unless legacy_message_delay area pref is set to true.
 
             Parameters
             ----------
             msg_length: int
                 Length of the current message.
             """
-
-            delay = min(3000, 100 + 60 * msg_length)
+            # rate limiting is effectively disabled unless "legacy_message_delay" is enabled
+            # to support legacy clients at expense of the newer ones (spam enter to send msg is back)
+            delay = 0
+            if self.legacy_message_delay:
+                # Legacy delay is hard-coded to the minimum of 100ms and a maximum of 3 seconds.
+                # Calculates at 60ms delay per symbol.
+                delay = min(3000, 100 + 60 * msg_length)
             self.next_message_time = round(time.time() * 1000.0 + delay)
 
         def can_send_message(self) -> bool:
             """
             Decide if an incoming IC message does not violate the area's established delay for
             the previously received IC message.
+            DEPRECATED unless legacy_message_delay area pref is set to true.
 
             Returns
             -------
@@ -802,7 +833,7 @@ class AreaManager(AssetManager):
 
         def play_track(self, name: str, client: ClientManager.Client,
                        raise_if_not_found: bool = False, reveal_sneaked: bool = False,
-                       force_same_restart: int = 1, fade_option: FadeOption = FadeOption.NO_FADE,
+                       force_same_restart: int = 1, fade_option: FadeOption = FadeOption.SMOOTH_PLAY,
                        pargs: Dict[str, Any] = None):
             """
             Play a music track in an area.
@@ -848,20 +879,37 @@ class AreaManager(AssetManager):
                 info = f'Music names may not reference parent or current directories: {name}'
                 raise ServerError.FileInvalidNameError(info)
 
-            try:
-                name, length, source = client.music_manager.get_music_data(
-                    name)
-            except MusicError.MusicNotFoundError:
-                try:
-                    name, length, source = client.hub.music_manager.get_music_data(
-                        name)
-                except MusicError.MusicNotFoundError:
-                    if raise_if_not_found:
-                        raise
-                    length, source = -1, ''
 
-            if 'name' not in pargs:
-                pargs['name'] = name
+            is_url = re.match(r'^https?://', name, re.IGNORECASE)
+
+            name_found = False
+            length, source = -1, ''
+            if is_url:
+                try:
+                    name, length, source = client.music_manager.get_music_data(name)
+                    name_found = True
+                except MusicError.MusicNotFoundError:
+                    try:
+                        name, length, source = client.hub.music_manager.get_music_data(name)
+                        name_found = True
+                    except MusicError.MusicNotFoundError:
+                        pass
+                if not name_found and not client.is_staff():
+                    if not client.hub.allow_streaming:
+                        raise MusicError.MusicNotFoundError(f"You are unauthorized for streaming music.")
+            else:
+                try:
+                    name, length, source = client.music_manager.get_music_data(name)
+                    name_found = True
+                except MusicError.MusicNotFoundError:
+                    try:
+                        name, length, source = client.hub.music_manager.get_music_data(name)
+                        name_found = True
+                    except MusicError.MusicNotFoundError:
+                        if raise_if_not_found:
+                            raise
+
+            pargs['name'] = name
             if 'char_id' not in pargs:
                 pargs['char_id'] = client.char_id
             if 'fade_option' not in pargs:

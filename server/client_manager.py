@@ -77,9 +77,14 @@ class ClientManager:
             self.char_id = None
             self.name = ''
             self.char_folder = ''
+            self.char_outfit = ''
             self.char_showname = ''
             self.pos = 'wit'
+            self.scale = 1000
+            self.vertical = 0
             self.showname = ''
+            self.sprite_layers = ''
+            self.anim_sequence = ''
             self.joined = time.time()
             self.last_active = Constants.get_time()
             self.viewing_hubs = False
@@ -96,6 +101,7 @@ class ClientManager:
 
             self.area = hub.area_manager.default_area()
             self.new_area = self.area  # It is different from self.area in transition to a new area
+            self.incoming_msg_id = 34
             self.party = None
             self.is_mod = False
             self.is_gm = False
@@ -103,12 +109,23 @@ class ClientManager:
             self.is_cm = False
             self.is_muted = False
             self.is_ooc_muted = False
+            self.is_shadow = False
+            self.shadow_time = 0
+            self.shadow_count = 0
+            self.shadow_next = 30
+
             self.pm_mute = False
             self.mod_call_time = 0
             self.evi_list = []
             self.muted_adverts = False
             self.muted_global = False
             self.pm_mute = False
+
+            self.timing_ooc = []
+            self.timing_ic = []
+            self.timing_global = []
+            self.global_msg_last = ""
+
 
             self.autopass = False
             self.disemvowel = False
@@ -157,6 +174,8 @@ class ClientManager:
             # Sender stuff
             self.response_key = 'DEFAULT'
 
+
+            self.is_afk = False
             # Pairing stuff
             self.charid_pair = -1
             self.pair_owner = False
@@ -171,6 +190,9 @@ class ClientManager:
             # modifications that it may have undergone afterwards (say, via gimp, gag, etc.)
             self.last_ic_char = ''  # The char they used to send their last IC message, not
             # necessarily equivalent to self.get_char_name()
+            
+            # the time since last ic message was sent by this person.
+            self.last_ic_message_time = 0.0
 
             # music flood-guard stuff
             self.mute_time = 0
@@ -248,7 +270,7 @@ class ClientManager:
             pair_jsn_packet['packet'] = 'pair'
             pair_jsn_packet['data'] = {}
             pair_jsn_packet['data']['pair_right'] = int(-1)
-            pair_jsn_packet['data']['offset_left'] = int(0)
+            pair_jsn_packet['data']['offset_left'] = int(500)
             pair_jsn_packet['data']['offset_right'] = int(0)
 
             
@@ -793,6 +815,20 @@ class ClientManager:
                 'chars_ao2_list': characters,
             })
 
+        def send_investigation(self):
+            self.send_command_dict('INVES', {
+                'enc_text': self.area.investigation
+            })
+
+        def send_weather(self):
+            weather_environment = "outdoors"
+            if self.area.environment_indoors:
+                weather_environment = "indoors"
+            self.send_command_dict('WEA', {
+                'name': self.area.weather,
+                'environment_name': weather_environment,
+            })
+
         def send_background(self, name: str = None, pos: str = None,
                             tod_backgrounds: Dict[str, str] = None):
             """
@@ -830,10 +866,13 @@ class ClientManager:
                 'pos': pos,
                 'tod_backgrounds_ao2_list': tod_backgrounds_ao2_list,
             })
+            self.send_weather()
+            self.send_investigation()
 
         def send_evidence_list(self):
+            evidence_list = self.area.get_evidence_list(self)
             self.send_command_dict('LE', {
-                'evidence_ao2_list': self.area.get_evidence_list(self)
+                'evidence_ao2_list': evidence_list
             })
 
         def send_health(self, side=None, health=None):
@@ -1041,8 +1080,13 @@ class ClientManager:
             self.char_id = char_id
             # Assumes players are not iniswapped initially, waiting for chrini packet
             self.char_folder = new_char
+            self.char_outfit = ''
             self.char_showname = ''
+            self.sprite_layers = ''
+            self.anim_sequence = ''
             self.pos = 'wit'
+            self.scale = 1000
+            self.vertical = 0
 
             if announce_zwatch:
                 self.send_ooc_others('(X) Client {} has changed from character `{}` to `{}` in '
@@ -1726,6 +1770,10 @@ class ClientManager:
             msg = '=== Hubs ==='
             for i, hub in self.hub.manager.get_managee_numerical_ids_to_managees().items():
                 name = hub.get_name()
+
+                if hub.invite_pass:
+                    continue 
+
                 if not name:
                     name = hub.get_id()
                 msg += '\r\nHub {}: {}'.format(i, name)
@@ -1980,8 +2028,7 @@ class ClientManager:
             auth_command(arg, announce_to_officers=announce_to_officers)
 
             # The following actions are true for all logged in roles
-            if self.area.evidence_mod == 'HiddenCM':
-                self.area.broadcast_evidence_list()
+            self.area.broadcast_evidence_list()
             self.send_music_list_view()  # Update music list to show all areas
 
             self.send_ooc('Logged in as a {}.'.format(role))
@@ -2109,8 +2156,7 @@ class ClientManager:
             self.is_cm = False
 
             # Clean-up operations
-            if self.area.evidence_mod == 'HiddenCM':
-                self.area.broadcast_evidence_list()
+            self.area.broadcast_evidence_list()
 
             # Update the music list to show reachable areas and activate the AFK timer
             self.send_music_list_view()
@@ -2273,6 +2319,9 @@ class ClientManager:
                     raise ClientError(
                         'You have not provided a download link for your files.')
             self.send_player_list_to_area()
+        
+        def can_send_message(self):
+            return (time.time() - self.last_ic_message_time) >= self.area.minimum_message_interval
 
         def get_info(self, as_mod: bool = False, as_cm: bool = False, identifier=None):
             if identifier is None:
@@ -2463,10 +2512,6 @@ class ClientManager:
 
         # Check if server is full, and if so, send number of players and disconnect
         if cur_id == -1:
-            c.send_command_dict('PN', {
-                'player_count': self.server.get_player_count(),
-                'player_limit': self.server.config['playerlimit']
-            })
             return c, False
         self.cur_id[cur_id] = True
         self.server.task_manager.tasks[c] = dict()

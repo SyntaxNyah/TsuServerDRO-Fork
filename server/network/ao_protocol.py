@@ -26,6 +26,7 @@ from __future__ import annotations
 
 import asyncio
 import typing
+import random
 from collections import namedtuple
 from typing import List
 
@@ -83,8 +84,11 @@ class AOProtocol(asyncio.Protocol):
             self.client.disconnect()
             return
 
-        fantacrypt_key = 34  # just fantacrypt things
-        self.client.send_command_dict('decryptor', {'key': fantacrypt_key})
+        fantacrypt_key = "NOENCRYPT"  # FANTACRYPT IS DEAD.
+        self.client.incoming_msg_id = -1
+        if self.server.config['strict_client_check']:
+            self.client.incoming_msg_id = random.randint(100000, 999999)
+        self.client.send_command_dict('decryptor', {'key': fantacrypt_key, 'last_msg_id' : self.client.incoming_msg_id})
 
     def connection_lost(self, exc):
         """ User disconnected
@@ -168,8 +172,11 @@ class AOProtocol(asyncio.Protocol):
             buf = b''
 
         # try to decode as utf-8, ignore any erroneous characters
-        self.buffer += buf.decode('utf-8', 'ignore')
-        self.buffer = self.buffer.translate({ord(c): None for c in '\0'})
+        if not isinstance(buf, str):
+            self.buffer += buf.decode('utf-8', 'ignore')
+            self.buffer = self.buffer.translate({ord(c): None for c in '\0'})
+        else:
+            self.buffer = buf
 
         if len(self.buffer) > 8192:
             logger.log_server(f'Terminated {self.client.get_ipreal()} (packet too long): '
@@ -269,6 +276,10 @@ class AOProtocol(asyncio.Protocol):
         command, *args = Constants.encode_ao_packet([command] + list(args))
         message = f'{command}#'
         for arg in args:
+            # Evidence packet uses tuples to construct its evidence entries
+            if type(arg) is tuple:
+                # AO2 evidence packet uses & to separate pieces of evidence
+                arg = "&".join(arg)
             message += f'{arg}#'
         message += '%'
 
@@ -346,4 +357,8 @@ class AOProtocol(asyncio.Protocol):
                        needs_auth=False),  # message typing packet
         'CU': _command(function=ao_commands.net_cmd_cu,
                        needs_auth=False),  # character url packet
+        'PAIRL': _command(function=ao_commands.net_cmd_pairl,
+                       needs_auth=False),  # Pair
+        'STATUS': _command(function=ao_commands.net_cmd_status,
+                       needs_auth=False),  # STATUS
     }
