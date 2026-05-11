@@ -32,7 +32,7 @@ class DefaultDROProtocol():
     def __eq__(self, other):
         return type(self).__name__ == type(other).__name__
 
-    VERSION_TO_SEND = [1, 8, 0]
+    VERSION_TO_SEND = [1, 8, 2]
 
     HAS_CLIENTSIDE_MUSIC_LOOPING = True
     HAS_DISTINCT_AREA_AND_MUSIC_LIST_OUTGOING_PACKETS = True
@@ -421,6 +421,10 @@ class DefaultDROProtocol():
     ]
 
 
+class ClientDRO1d8d0(DefaultDROProtocol):
+    VERSION_TO_SEND = [1, 8, 0]
+
+
 class ClientDRO1d7d0(DefaultDROProtocol):
     VERSION_TO_SEND = [1, 7, 0]
 
@@ -734,6 +738,14 @@ class ClientAO2d10(DefaultDROProtocol):
 
     PW_INBOUND = [
         ('password', ArgType.STR_OR_EMPTY),  # 0
+    ]
+
+    FM_OUTBOUND = [
+        ('legacy_music_ao2_list', list()),  # 0
+    ]
+
+    SM_OUTBOUND = [
+        ('legacy_music_ao2_list', list()),  # 0
     ]
 
 
