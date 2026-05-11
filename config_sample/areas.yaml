@@ -39,7 +39,7 @@
 # *scream_range: If <ALL>, all areas can receive a /scream message sent from this area. If <REACHABLE_AREAS>, all areas defined in reachable_areas can receive a /scream message sent from this area. If it is a comma-separated list of areas (by name), only said areas can receive /scream messages.
 # *song_switch_allowed: If false, only GM+ can do /play. If true, no such restriction is imposed.
 # *visible_areas: If <ALL>, a passage will be set as visible (but not necessarily reachable) from this area to every other area. If <REACHABLE_AREAS>, the procedure will be done to exactly all areas described in the areas' `reachable_areas` key. If it is a comma-separated list of areas (by name), the procedure will be done to the listed areas.
-# *legacy_message_delay: If true, uses the legacy message calculation which resulted in messages being delayed for an unknown amount of time. Disabled by default for eating inputs and causing people to have to spam Enter to get their messages out. Solved by the message queue introduced in 1.8.1.
+# *legacy_message_delay: If true, uses the legacy message calculation which resulted in messages being delayed for a highly variable amount of time, up to hard-coded 3 seconds. Disabled by default for eating inputs and causing people to have to spam Enter to get their messages out. Solved by the message queue introduced in 1.8.1.
 # *minimum_message_interval:  If a positive number, the number of seconds that must pass before the speaking player can send another message. A good default is 0.5. Enforced individually, not area-wide.
 
 # --------
