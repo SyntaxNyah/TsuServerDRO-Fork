@@ -310,6 +310,8 @@ class DefaultDROProtocol():
         ('showname', ''),  # 2
         ('force_same_restart', 1),  # 3
         ('fade_option', ArgType.INT),  # 4
+        ('pitch', ''),  # 5
+        ('tempo', ''),  # 6
     ]
 
     RT_INBOUND = [

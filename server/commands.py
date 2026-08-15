@@ -24,6 +24,7 @@ import collections
 import datetime
 import random
 import hashlib
+import re
 import string
 import time
 
@@ -7291,10 +7292,14 @@ def ooc_cmd_play(client: ClientManager.Client, arg: str):
     SYNTAX
     /play <track_name>
     /play <track_name> <fade_type>
+    /play <url> <pitch> <tempo> (GM only)
 
     PARAMETERS
     <track_name>: Track to play
     <fade_type>: The fade behavior for the new song. May be: in, out, mix
+    <url>: A streaming music URL to play. GM only with pitch and tempo.
+    <pitch>: Pitch shift in semitones (e.g. 2.0 is two semitones up).
+    <tempo>: Tempo change in percent (e.g. 5 is 5 percent faster).
 
     EXAMPLES
     >>> /play Trial(AJ).opus
@@ -7307,6 +7312,8 @@ def ooc_cmd_play(client: ClientManager.Client, arg: str):
     Plays CustomTrack.opus, the previous song will fade out before the new one begins playing.
     >>> /play CustomTrack.opus mix
     Plays CustomTrack.opus, fade will combine both in and out behavior.
+    >>> /play https://example.com/song.opus 2.0 5
+    Plays song.opus 2 semitones up and 5 percent faster. GM only.
     """
 
     try:
@@ -7337,8 +7344,29 @@ def ooc_cmd_play(client: ClientManager.Client, arg: str):
     except Exception:
         pass
 
+    pitch = None
+    tempo = None
+    if client.is_gm and re.match(r'^https?://', track_name, re.IGNORECASE):
+        name_parts = track_name.split()
+        if len(name_parts) >= 3:
+            try:
+                pitch = float(name_parts[-2])
+                tempo = float(name_parts[-1])
+                if tempo <= -100:
+                    raise ValueError
+                track_name = ' '.join(name_parts[:-2])
+            except ValueError:
+                pitch = None
+                tempo = None
+
+    pargs = dict()
+    if pitch is not None and tempo is not None:
+        pargs['pitch'] = pitch
+        pargs['tempo'] = tempo
+
     client.area.play_track(
-        track_name, client, raise_if_not_found=False, reveal_sneaked=False, fade_option=fade_option)
+        track_name, client, raise_if_not_found=False, reveal_sneaked=False,
+        fade_option=fade_option, pargs=pargs)
 
     client.send_ooc('You have played track `{}` in your area.'
                     .format(track_name))

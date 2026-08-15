@@ -572,6 +572,10 @@ GMs can:
     * `in`: The new song will fade in as it begins to play.
     * `out`: The old song will fade out before the new song begins to play.
     * `mix`: A combination of `in` and `out`.
+* **play** "url" "pitch" "tempo" (GM only)
+    - Plays a streaming music URL with a forced pitch and tempo that apply to that song only.
+    - Pitch is in semitones (e.g. 2.0 is two semitones up). Tempo is in percent (e.g. 5 is 5 percent faster).
+    - Example: `/play https://example.com/song.opus 2.0 5`.
 * **poison** "ID" "initials of effects" "length"
     - Applies a poison to the target that will inflict them in the given length of time in seconds the given effects.
 * **pos_force** "position" "ID"

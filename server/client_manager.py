@@ -883,7 +883,7 @@ class ClientManager:
 
 
         def send_music(self, name=None, char_id=None, fade_option=None, showname=None, force_same_restart=None,
-                       loop=None, channel=None, effects=None):
+                       loop=None, channel=None, effects=None, pitch=None, tempo=None):
             self.send_command_dict('MC', {
                 'name': name,
                 'char_id': char_id,
@@ -893,6 +893,8 @@ class ClientManager:
                 'loop': loop,
                 'channel': channel,
                 'effects': effects,
+                'pitch': pitch,
+                'tempo': tempo,
             })
 
         def send_splash(self, name=None):
