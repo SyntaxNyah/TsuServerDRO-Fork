@@ -7346,7 +7346,7 @@ def ooc_cmd_play(client: ClientManager.Client, arg: str):
 
     pitch = None
     tempo = None
-    if client.is_gm and re.match(r'^https?://', track_name, re.IGNORECASE):
+    if client.is_staff() and re.match(r'^https?://', track_name, re.IGNORECASE):
         name_parts = track_name.split()
         if len(name_parts) >= 3:
             try:

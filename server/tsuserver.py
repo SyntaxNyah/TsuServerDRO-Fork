@@ -71,7 +71,7 @@ class TsuserverDR:
 
         self.release = 5
         self.major_version = 5
-        self.minor_version = 2
+        self.minor_version = 3
         self.segment_version = ''
         # YYMMDDa where a corresponds to the number of commits pushed to the target branch.
         # This is too complex to calculate manually so it should be automated in the future
